@@ -8,7 +8,7 @@ interface TestResult {
 
 const BASE_URL = 'http://localhost:3002';
 const results: TestResult[] = [];
-let testUser: { userId: string; email: string; token: string; refreshToken: string } | null = null;
+let testUser: { userId: string; email: string; username: string; token: string; refreshToken: string } | null = null;
 
 const makeRequest = (
   method: string,
@@ -103,16 +103,18 @@ const runTests = async () => {
     testUser = {
       userId: data.user.id,
       email: data.user.email,
+      username: uniqueUsername,
       token: data.token,
       refreshToken: data.refreshToken
     };
   });
 
   await runTest('Register with invalid email fails', async () => {
+    const timestamp = Date.now();
     const response = await makeRequest('POST', '/api/auth/register', {
       email: 'invalid-email',
       password: 'password123',
-      username: 'testuser2'
+      username: `testuser2-${timestamp}`
     });
     if (response.statusCode !== 400) {
       throw new Error(`Expected 400, got ${response.statusCode}`);
@@ -120,10 +122,11 @@ const runTests = async () => {
   });
 
   await runTest('Register with weak password fails', async () => {
+    const timestamp = Date.now();
     const response = await makeRequest('POST', '/api/auth/register', {
-      email: 'test2@example.com',
+      email: `test2-${timestamp}@example.com`,
       password: 'weak',
-      username: 'testuser3'
+      username: `testuser3-${timestamp}`
     });
     if (response.statusCode !== 400) {
       throw new Error(`Expected 400, got ${response.statusCode}`);
@@ -131,10 +134,14 @@ const runTests = async () => {
   });
 
   await runTest('Register with duplicate email fails', async () => {
+    if (!testUser) {
+      throw new Error('No test user available for duplicate email test');
+    }
+    const timestamp = Date.now();
     const response = await makeRequest('POST', '/api/auth/register', {
-      email: 'test@example.com',
+      email: testUser.email,
       password: 'password123',
-      username: 'differentuser'
+      username: `differentuser-${timestamp}`
     });
     if (response.statusCode !== 409) {
       throw new Error(`Expected 409, got ${response.statusCode}`);
@@ -142,10 +149,14 @@ const runTests = async () => {
   });
 
   await runTest('Register with duplicate username fails', async () => {
+    if (!testUser) {
+      throw new Error('No test user available for duplicate username test');
+    }
+    const timestamp = Date.now();
     const response = await makeRequest('POST', '/api/auth/register', {
-      email: 'different@example.com',
+      email: `different-${timestamp}@example.com`,
       password: 'password123',
-      username: 'testuser'
+      username: testUser.username
     });
     if (response.statusCode !== 409) {
       throw new Error(`Expected 409, got ${response.statusCode}`);
@@ -153,8 +164,11 @@ const runTests = async () => {
   });
 
   await runTest('Login with valid credentials succeeds', async () => {
+    if (!testUser) {
+      throw new Error('No test user available for login test');
+    }
     const response = await makeRequest('POST', '/api/auth/login', {
-      email: 'test@example.com',
+      email: testUser.email,
       password: 'password123'
     });
     if (response.statusCode !== 200) {
