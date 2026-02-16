@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: user-service-config
+  namespace: game-services
+data:
+  DB_HOST: "postgres-user-service"
+  DB_PORT: "5432"
+  DB_NAME: "arcane_user-service"
+  DB_USER: "postgres"
+  JWT_EXPIRY: "24h"
+  JWT_REFRESH_EXPIRY: "7d"
+  CORS_ORIGIN: "http://game-service:3000"
+  NODE_ENV: "production"
+  PORT: "3002"
